@@ -1,0 +1,93 @@
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+    line-height: 1.6;
+}
+
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 1rem 0;
+    text-align: center;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+}
+
+nav ul li {
+    margin: 0 1rem;
+}
+
+nav ul li a {
+    color: #fff;
+    text-decoration: none;
+}
+
+main {
+    padding: 2rem;
+}
+
+.hero {
+    text-align: center;
+    padding: 3rem 0;
+}
+
+.content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1rem;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+footer {
+    text-align: center;
+    padding: 1rem 0;
+    background-color: #333;
+    color: #fff;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+/* Minimalist technological theme adjustments */
+body {
+    font-family: monospace; /* More techy font */
+    background-color: #1e1e1e; /* Dark background */
+    color: #dcdcdc; /* Light text */
+}
+
+header {
+    background-color: #2d2d2d;
+}
+
+nav ul li a {
+    color: #a9b7c6;
+}
+
+.content {
+    background-color: #282828;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+footer {
+    background-color: #2d2d2d;
+}
+
+a {
+    color: #6897bb;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
