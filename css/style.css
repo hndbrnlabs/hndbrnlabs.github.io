@@ -1,17 +1,18 @@
 body {
-    font-family: sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* A more modern font */
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
-    color: #333;
+    background-color: #0a0a0a; /* Dark, almost black background for a futuristic feel */
+    color: #f0f0f0; /* Light text for contrast */
     line-height: 1.6;
 }
 
 header {
-    background-color: #333;
-    color: #fff;
+    background-color: #1a1a1a; /* Slightly lighter header */
+    color: #64ffda; /* Teal accent color, common in AI/tech themes */
     padding: 1rem 0;
     text-align: center;
+    border-bottom: 2px solid #64ffda; /* Accent border */
 }
 
 nav ul {
@@ -23,12 +24,17 @@ nav ul {
 }
 
 nav ul li {
-    margin: 0 1rem;
+    margin: 0 1.5rem; /* Increased spacing */
 }
 
 nav ul li a {
-    color: #fff;
+    color: #d4d4d4; /* Light gray for navigation */
     text-decoration: none;
+    transition: color 0.3s ease; /* Smooth hover effect */
+}
+
+nav ul li a:hover {
+    color: #64ffda; /* Teal on hover */
 }
 
 main {
@@ -37,57 +43,53 @@ main {
 
 .hero {
     text-align: center;
-    padding: 3rem 0;
+    padding: 4rem 0; /* Increased padding */
+    background-color: rgba(255, 255, 255, 0.05); /* Subtle background overlay */
+    border-radius: 8px;
+}
+
+.hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #64ffda; /* Teal for the heading */
 }
 
 .content {
-    max-width: 800px;
+    max-width: 900px; /* Wider content area */
     margin: 0 auto;
-    padding: 1rem;
-    background-color: #fff;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem; /* Increased padding */
+    background-color: #1a1a1a; /* Dark background */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Stronger shadow */
 }
 
 footer {
     text-align: center;
     padding: 1rem 0;
-    background-color: #333;
-    color: #fff;
+    background-color: #1a1a1a;
+    color: #d4d4d4;
     position: fixed;
     bottom: 0;
     width: 100%;
-}
-
-/* Minimalist technological theme adjustments */
-body {
-    font-family: monospace; /* More techy font */
-    background-color: #1e1e1e; /* Dark background */
-    color: #dcdcdc; /* Light text */
-}
-
-header {
-    background-color: #2d2d2d;
-}
-
-nav ul li a {
-    color: #a9b7c6;
-}
-
-.content {
-    background-color: #282828;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-footer {
-    background-color: #2d2d2d;
+    border-top: 1px solid #333; /* Subtle border */
 }
 
 a {
-    color: #6897bb;
+    color: #64ffda; /* Teal for links */
     text-decoration: none;
+    transition: color 0.3s ease;
 }
 
 a:hover {
-    text-decoration: underline;
+    text-decoration: underline; /* Underline on hover */
+    color: #a7ffeb; /* Lighter teal on hover */
+}
+
+ul {
+    list-style-type: none; /* Remove bullet points */
+    padding: 0;
+}
+
+li {
+    margin-bottom: 0.5rem;
 }
