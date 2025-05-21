@@ -3,30 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimalist Site</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Galactic Research Navigator</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; color: #eee; font-family: sans-serif; }
+        #galaxy-container { position: relative; width: 100vw; height: 100vh; }
+        .star {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+        .star:hover {
+            opacity: 1;
+            box-shadow: 0 0 10px #fff;
+        }
+        #project-details {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #eee;
+            padding: 20px;
+            border-radius: 5px;
+            z-index: 10;
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="about.html">About</a></li>
-                <li><a href="projects.html">Projects</a></li>
-                <li><a href="research.html">Research</a></li>
-            </ul>
-        </nav>
-    </header>
+    <div id="galaxy-container">
+        <div id="project-details"></div>
+    </div>
 
-    <main>
-        <section class="hero">
-            <h1>Welcome</h1>
-            <p>A minimalist space for thoughts and creations.</p>
-            </section>
-    </main>
+    <script>
+        const galaxyContainer = document.getElementById('galaxy-container');
+        const projectDetailsDiv = document.getElementById('project-details');
 
-    <footer>
-        <p>&copy; 2025 Your Name</p>
-    </footer>
+        // Mock research project data
+        const projects = [
+            { id: 'proj1', title: 'Quantum Entanglement Study', topic: 'Quantum Physics', progress: 0.8, color: 'lightblue', size: 15, x: 10, y: 20 },
+            { id: 'proj2', title: 'Exoplanet Atmosphere Analysis', topic: 'Astrophysics', progress: 0.5, color: 'orange', size: 12, x: 70, y: 30 },
+            { id: 'proj3', title: 'Machine Learning for Drug Discovery', topic: 'AI & Biotech', progress: 0.9, color: 'lightgreen', size: 18, x: 30, y: 60 },
+            { id: 'proj4', title: 'Dark Matter Distribution Mapping', topic: 'Astrophysics', progress: 0.3, color: 'yellow', size: 10, x: 85, y: 80 },
+            { id: 'proj5', title: 'Novel Materials Synthesis', topic: 'Materials Science', progress: 0.7, color: 'pink', size: 14, x: 50, y: 10 },
+            { id: 'proj6', title: 'Cosmological Microwave Background Analysis', topic: 'Cosmology', progress: 0.6, color: 'cyan', size: 11, x: 25, y: 90 },
+            // Add more projects here
+        ];
+
+        function renderGalaxy() {
+            galaxyContainer.innerHTML = ''; // Clear previous stars
+            galaxyContainer.appendChild(projectDetailsDiv); // Ensure details div is present
+
+            projects.forEach(project => {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.width = `${project.size}px`;
+                star.style.height = `${project.size}px`;
+                star.style.backgroundColor = project.color;
+                star.style.left = `${project.x}%`;
+                star.style.top = `${project.y}%`;
+                star.dataset.projectId = project.id;
+
+                star.addEventListener('click', () => showProjectDetails(project));
+                galaxyContainer.appendChild(star);
+            });
+        }
+
+        function showProjectDetails(project) {
+            projectDetailsDiv.innerHTML = `
+                <h3>${project.title}</h3>
+                <p><strong>Topic:</strong> ${project.topic}</p>
+                <p><strong>Progress:</strong> ${(project.progress * 100).toFixed(0)}%</p>
+                <button onclick="hideProjectDetails()">Close</button>
+            `;
+            projectDetailsDiv.style.display = 'block';
+        }
+
+        function hideProjectDetails() {
+            projectDetailsDiv.style.display = 'none';
+        }
+
+        renderGalaxy();
+
+        // Basic "clustering" by initial placement - in a more advanced version,
+        // you'd have logic to group projects by topic visually.
+    </script>
 </body>
 </html>
