@@ -34,39 +34,76 @@
 
   // Scene, Camera, Renderer
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
   const renderer = new THREE.WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
   galaxyContainer.appendChild(renderer.domElement);
 
-  // OrbitControls for camera interaction
+  // OrbitControls
   const controls = new OrbitControls(camera, renderer.domElement);
-  camera.position.z = 500;
+  camera.position.z = 800;
   controls.update();
+
+  // Galaxy Background (Particle System)
+  const particleCount = 10000;
+  const positions = new Float32Array(particleCount * 3);
+  const colors = new Float32Array(particleCount * 3);
+  const sizes = new Float32Array(particleCount);
+  const color = new THREE.Color();
+
+  for (let i = 0; i < particleCount; i++) {
+  const i3 = i * 3;
+  positions[i3 + 0] = (Math.random() - 0.5) * 2000;
+  positions[i3 + 1] = (Math.random() - 0.5) * 2000;
+  positions[i3 + 2] = (Math.random() - 0.5) * 2000;
+
+  const vx = (Math.random() + 1) / 2;
+  color.setHSL(vx, Math.random() * 0.1 + 0.8, Math.random() * 0.1 + 0.8);
+
+  colors[i3 + 0] = color.r;
+  colors[i3 + 1] = color.g;
+  colors[i3 + 2] = color.b;
+
+  sizes[i] = Math.random() * 4 + 1;
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+  const material = new THREE.PointsMaterial({
+  sizeAttenuation: true,
+  vertexColors: true,
+  size: 2,
+  blending: THREE.AdditiveBlending
+  });
+
+  const particleSystem = new THREE.Points(geometry, material);
+  scene.add(particleSystem);
 
   // Mock research project data (3D positions)
   const projects = [
-  { id: 'proj1', title: 'Quantum Entanglement Study', topic: 'Quantum Physics', progress: 0.8, color: 'lightblue', size: 5, x: 0, y: 0, z: 0 },
-  { id: 'proj2', title: 'Exoplanet Atmosphere Analysis', topic: 'Astrophysics', progress: 0.5, color: 'orange', size: 4, x: 100, y: 50, z: -50 },
-  { id: 'proj3', title: 'Machine Learning for Drug Discovery', topic: 'AI & Biotech', progress: 0.9, color: 'lightgreen', size: 6, x: -50, y: -100, z: 100 },
-  { id: 'proj4', title: 'Dark Matter Distribution Mapping', topic: 'Astrophysics', progress: 0.3, color: 'yellow', size: 3, x: -150, y: 80, z: -80 },
-  { id: 'proj5', title: 'Novel Materials Synthesis', topic: 'Materials Science', progress: 0.7, color: 'pink', size: 4.5, x: 75, y: -20, z: 30 },
-  { id: 'proj6', title: 'Cosmological Microwave Background Analysis', topic: 'Cosmology', progress: 0.6, color: 'cyan', size: 3.5, x: -200, y: 0, z: -100 },
+  { id: 'proj1', title: 'Quantum Entanglement Study', topic: 'Quantum Physics', progress: 0.8, color: 'lightblue', size: 10, x: 0, y: 0, z: 100 },
+  { id: 'proj2', title: 'Exoplanet Atmosphere Analysis', topic: 'Astrophysics', progress: 0.5, color: 'orange', size: 8, x: 150, y: 80, z: -100 },
+  { id: 'proj3', title: 'Machine Learning for Drug Discovery', topic: 'AI & Biotech', progress: 0.9, color: 'lightgreen', size: 12, x: -100, y: -150, z: 150 },
+  { id: 'proj4', title: 'Dark Matter Distribution Mapping', topic: 'Astrophysics', progress: 0.3, color: 'yellow', size: 6, x: -200, y: 120, z: -120 },
+  { id: 'proj5', title: 'Novel Materials Synthesis', topic: 'Materials Science', progress: 0.7, color: 'pink', size: 9, x: 120, y: -30, z: 50 },
+  { id: 'proj6', title: 'Cosmological Microwave Background Analysis', topic: 'Cosmology', progress: 0.6, color: 'cyan', size: 7, x: -250, y: 0, z: -150 },
   // Add more projects here
   ];
 
-  // Create stars (spheres)
+  // Create project stars (spheres)
   projects.forEach(project => {
   const geometry = new THREE.SphereGeometry(project.size, 16, 16);
   const material = new THREE.MeshBasicMaterial({ color: project.color });
   const star = new THREE.Mesh(geometry, material);
   star.position.set(project.x, project.y, project.z);
-  star.userData = { projectId: project.id }; // Store project ID for interaction
-  star.addEventListener('click', () => showProjectDetails(project)); // No direct click event in Three.js
+  star.userData = { projectId: project.id, projectData: project }; // Store project data
   scene.add(star);
   });
 
-  // Raycasting for object selection (click simulation)
+  // Raycasting
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
 
@@ -80,10 +117,7 @@
   if (intersects.length > 0) {
   const intersectedObject = intersects[0].object;
   if (intersectedObject.userData && intersectedObject.userData.projectId) {
-  const project = projects.find(p => p.id === intersectedObject.userData.projectId);
-  if (project) {
-  showProjectDetails(project);
-  }
+  showProjectDetails(intersectedObject.userData.projectData);
   }
   }
   }
@@ -104,15 +138,12 @@
 
   function animate() {
   requestAnimationFrame(animate);
-  controls.update(); // Required for OrbitControls to work
+  controls.update();
   renderer.render(scene, camera);
   }
 
-  window.addEventListener('click', onMouseClick, false); // Use click event for raycasting
+  window.addEventListener('click', onMouseClick, false);
   animate();
-
-  // Basic "clustering" by initial placement - in a more advanced version,
-  // you'd have logic to group projects by topic visually.
   </script>
  </body>
  </html>
