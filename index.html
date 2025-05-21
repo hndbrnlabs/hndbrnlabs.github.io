@@ -44,63 +44,83 @@
   camera.position.z = 800;
   controls.update();
 
-  // Galaxy Background (Particle System with Texture)
-  const particleCount = 15000;
-  const positions = new Float32Array(particleCount * 3);
-  const colors = new Float32Array(particleCount * 3);
-  const sizes = new Float32Array(particleCount);
-  const color = new THREE.Color();
+  // Galaxy Background (Fainter Particles for Depth)
+  const bgParticleCount = 25000;
+  const bgPositions = new Float32Array(bgParticleCount * 3);
+  const bgColors = new Float32Array(bgParticleCount * 3);
+  const bgSizes = new Float32Array(bgParticleCount);
+  const bgColor = new THREE.Color();
   const textureLoader = new THREE.TextureLoader();
-  const starTexture = textureLoader.load('https://threejs.org/examples/textures/sprites/white-point.png'); // A simpler white point
+  const starTexture = textureLoader.load('https://threejs.org/examples/textures/sprites/white-point.png');
 
-  for (let i = 0; i < particleCount; i++) {
+  for (let i = 0; i < bgParticleCount; i++) {
   const i3 = i * 3;
-  positions[i3 + 0] = (Math.random() - 0.5) * 2000;
-  positions[i3 + 1] = (Math.random() - 0.5) * 2000;
-  positions[i3 + 2] = (Math.random() - 0.5) * 2000;
+  bgPositions[i3 + 0] = (Math.random() - 0.5) * 2500;
+  bgPositions[i3 + 1] = (Math.random() - 0.5) * 2500;
+  bgPositions[i3 + 2] = (Math.random() - 0.5) * 2500;
 
-  const vx = (Math.random() + 1) / 2;
-  color.setHSL(vx, Math.random() * 0.1 + 0.8, Math.random() * 0.1 + 0.8);
+  const intensity = Math.random() * 0.5 + 0.5; // Fainter
+  bgColor.setHSL(0, 0, 1); // White
+  bgColors[i3 + 0] = bgColor.r * intensity;
+  bgColors[i3 + 1] = bgColor.g * intensity;
+  bgColors[i3 + 2] = bgColor.b * intensity;
 
-  colors[i3 + 0] = color.r;
-  colors[i3 + 1] = color.g;
-  colors[i3 + 2] = color.b;
-
-  sizes[i] = Math.random() * 4 + 1;
+  bgSizes[i] = Math.random() * 1.5 + 0.5; // Smaller sizes
   }
 
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+  const bgGeometry = new THREE.BufferGeometry();
+  bgGeometry.setAttribute('position', new THREE.BufferAttribute(bgPositions, 3));
+  bgGeometry.setAttribute('color', new THREE.BufferAttribute(bgColors, 3));
+  bgGeometry.setAttribute('size', new THREE.BufferAttribute(bgSizes, 1));
 
-  const material = new THREE.PointsMaterial({
+  const bgMaterial = new THREE.PointsMaterial({
   sizeAttenuation: true,
   vertexColors: true,
-  size: 3,
+  size: 2,
   map: starTexture,
   transparent: true,
   alphaTest: 0.01,
-  blending: THREE.AdditiveBlending // Additive blending for glow
+  blending: THREE.AdditiveBlending
   });
 
-  const particleSystem = new THREE.Points(geometry, material);
-  scene.add(particleSystem);
+  const background = new THREE.Points(bgGeometry, bgMaterial);
+  scene.add(background);
 
-  // Mock research project data
+  // Mock research project data with progress as age proxy
   const projects = [
-  { id: 'proj1', title: 'Quantum Entanglement Study', topic: 'Quantum Physics', progress: 0.8, color: 'lightblue', size: 10, x: 0, y: 0, z: 100 },
-  { id: 'proj2', title: 'Exoplanet Atmosphere Analysis', topic: 'Astrophysics', progress: 0.5, color: 'orange', size: 12, x: 150, y: 80, z: -100 },
-  { id: 'proj3', title: 'Machine Learning for Drug Discovery', topic: 'AI & Biotech', progress: 0.9, color: 'lightgreen', size: 18, x: -100, y: -150, z: 150 },
-  { id: 'proj4', title: 'Dark Matter Distribution Mapping', topic: 'Astrophysics', progress: 0.3, color: 'yellow', size: 10, x: -200, y: 120, z: -120 },
-  { id: 'proj5', title: 'Novel Materials Synthesis', topic: 'Materials Science', progress: 0.7, color: 'pink', size: 14, x: 120, y: -30, z: 50 },
-  { id: 'proj6', title: 'Cosmological Microwave Background Analysis', topic: 'Cosmology', progress: 0.6, color: 'cyan', size: 11, x: -250, y: 0, z: -150 },
+  { id: 'proj1', title: 'Quantum Entanglement Study', topic: 'Quantum Physics', progress: 0.1, size: 15, x: 0, y: 0, z: 100 }, // 'Younger'
+  { id: 'proj2', title: 'Exoplanet Atmosphere Analysis', topic: 'Astrophysics', progress: 0.5, size: 12, x: 150, y: 80, z: -100 }, // Intermediate
+  { id: 'proj3', title: 'Machine Learning for Drug Discovery', topic: 'AI & Biotech', progress: 0.9, size: 18, x: -100, y: -150, z: 150 }, // 'Older'
+  { id: 'proj4', title: 'Dark Matter Distribution Mapping', topic: 'Astrophysics', progress: 0.2, size: 10, x: -200, y: 120, z: -120 }, // Younger
+  { id: 'proj5', title: 'Novel Materials Synthesis', topic: 'Materials Science', progress: 0.7, size: 14, x: 120, y: -30, z: 50 }, // Older
+  { id: 'proj6', title: 'Cosmological Microwave Background Analysis', topic: 'Cosmology', progress: 0.4, size: 11, x: -250, y: 0, z: -150 }, // Intermediate
   ];
 
-  // Create project stars (spheres with blending)
+  function getStarColor(progress) {
+  // Approximate color gradient: Blue -> White -> Yellow -> Orange -> Red
+  const color = new THREE.Color();
+  const p = progress;
+
+  if (p < 0.25) {
+  color.setRGB(0.3 + p * 2.8, 0.6 + p * 1.6, 1.0); // Blue to White-Blue
+  } else if (p < 0.5) {
+  const q = (p - 0.25) * 4;
+  color.setRGB(1.0, 1.0 - 0.4 * q, 1.0 - 0.8 * q); // White-Blue to Yellow-White
+  } else if (p < 0.75) {
+  const q = (p - 0.5) * 4;
+  color.setRGB(1.0, 0.6 - 0.2 * q, 0.2 + 0.2 * q); // Yellow-White to Orange
+  } else {
+  const q = (p - 0.75) * 4;
+  color.setRGB(1.0 - 0.2 * q, 0.4 - 0.1 * q, 0.4 - 0.4 * q); // Orange to Red-Orange
+  }
+  return color;
+  }
+
+  // Create project stars (spheres with astronomical colors)
   projects.forEach(project => {
   const geometry = new THREE.SphereGeometry(project.size, 32, 32);
-  const material = new THREE.MeshBasicMaterial({ color: project.color, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending });
+  const color = getStarColor(project.progress);
+  const material = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
   const star = new THREE.Mesh(geometry, material);
   star.position.set(project.x, project.y, project.z);
   star.userData = { projectId: project.id, projectData: project };
@@ -130,7 +150,7 @@
   projectDetailsDiv.innerHTML = `
   <h3>${project.title}</h3>
   <p><strong>Topic:</strong> ${project.topic}</p>
-  <p><strong>Progress:</strong> ${(project.progress * 100).toFixed(0)}%</p>
+  <p><strong>"Age"/Progress:</strong> ${(project.progress * 100).toFixed(0)}%</p>
   <button onclick="hideProjectDetails()">Close</button>
   `;
   projectDetailsDiv.style.display = 'block';
