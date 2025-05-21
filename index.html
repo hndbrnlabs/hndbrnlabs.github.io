@@ -35,7 +35,7 @@
   // Scene, Camera, Renderer
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
-  const renderer = new THREE.WebGLRenderer();
+  const renderer = new THREE.WebGLRenderer({ antialias: true }); // Enable antialiasing
   renderer.setSize(window.innerWidth, window.innerHeight);
   galaxyContainer.appendChild(renderer.domElement);
 
@@ -44,12 +44,14 @@
   camera.position.z = 800;
   controls.update();
 
-  // Galaxy Background (Particle System)
-  const particleCount = 10000;
+  // Galaxy Background (Particle System with Texture)
+  const particleCount = 15000;
   const positions = new Float32Array(particleCount * 3);
   const colors = new Float32Array(particleCount * 3);
   const sizes = new Float32Array(particleCount);
   const color = new THREE.Color();
+  const textureLoader = new THREE.TextureLoader();
+  const starTexture = textureLoader.load('https://threejs.org/examples/textures/sprites/disc.png'); // Using a disc sprite
 
   for (let i = 0; i < particleCount; i++) {
   const i3 = i * 3;
@@ -64,7 +66,7 @@
   colors[i3 + 1] = color.g;
   colors[i3 + 2] = color.b;
 
-  sizes[i] = Math.random() * 4 + 1;
+  sizes[i] = Math.random() * 3 + 1;
   }
 
   const geometry = new THREE.BufferGeometry();
@@ -75,31 +77,33 @@
   const material = new THREE.PointsMaterial({
   sizeAttenuation: true,
   vertexColors: true,
-  size: 2,
+  size: 5,
+  map: starTexture,
+  transparent: true,
+  alphaTest: 0.01,
   blending: THREE.AdditiveBlending
   });
 
   const particleSystem = new THREE.Points(geometry, material);
   scene.add(particleSystem);
 
-  // Mock research project data (3D positions)
+  // Mock research project data
   const projects = [
-  { id: 'proj1', title: 'Quantum Entanglement Study', topic: 'Quantum Physics', progress: 0.8, color: 'lightblue', size: 10, x: 0, y: 0, z: 100 },
-  { id: 'proj2', title: 'Exoplanet Atmosphere Analysis', topic: 'Astrophysics', progress: 0.5, color: 'orange', size: 8, x: 150, y: 80, z: -100 },
-  { id: 'proj3', title: 'Machine Learning for Drug Discovery', topic: 'AI & Biotech', progress: 0.9, color: 'lightgreen', size: 12, x: -100, y: -150, z: 150 },
-  { id: 'proj4', title: 'Dark Matter Distribution Mapping', topic: 'Astrophysics', progress: 0.3, color: 'yellow', size: 6, x: -200, y: 120, z: -120 },
-  { id: 'proj5', title: 'Novel Materials Synthesis', topic: 'Materials Science', progress: 0.7, color: 'pink', size: 9, x: 120, y: -30, z: 50 },
-  { id: 'proj6', title: 'Cosmological Microwave Background Analysis', topic: 'Cosmology', progress: 0.6, color: 'cyan', size: 7, x: -250, y: 0, z: -150 },
-  // Add more projects here
+  { id: 'proj1', title: 'Quantum Entanglement Study', topic: 'Quantum Physics', progress: 0.8, color: 'lightblue', size: 15, x: 0, y: 0, z: 100 },
+  { id: 'proj2', title: 'Exoplanet Atmosphere Analysis', topic: 'Astrophysics', progress: 0.5, color: 'orange', size: 12, x: 150, y: 80, z: -100 },
+  { id: 'proj3', title: 'Machine Learning for Drug Discovery', topic: 'AI & Biotech', progress: 0.9, color: 'lightgreen', size: 18, x: -100, y: -150, z: 150 },
+  { id: 'proj4', title: 'Dark Matter Distribution Mapping', topic: 'Astrophysics', progress: 0.3, color: 'yellow', size: 10, x: -200, y: 120, z: -120 },
+  { id: 'proj5', title: 'Novel Materials Synthesis', topic: 'Materials Science', progress: 0.7, color: 'pink', size: 14, x: 120, y: -30, z: 50 },
+  { id: 'proj6', title: 'Cosmological Microwave Background Analysis', topic: 'Cosmology', progress: 0.6, color: 'cyan', size: 11, x: -250, y: 0, z: -150 },
   ];
 
-  // Create project stars (spheres)
+  // Create project stars (smoother spheres)
   projects.forEach(project => {
-  const geometry = new THREE.SphereGeometry(project.size, 16, 16);
+  const geometry = new THREE.SphereGeometry(project.size, 32, 32); // Increased segments and rings
   const material = new THREE.MeshBasicMaterial({ color: project.color });
   const star = new THREE.Mesh(geometry, material);
   star.position.set(project.x, project.y, project.z);
-  star.userData = { projectId: project.id, projectData: project }; // Store project data
+  star.userData = { projectId: project.id, projectData: project };
   scene.add(star);
   });
 
