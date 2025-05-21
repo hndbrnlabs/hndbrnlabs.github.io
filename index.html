@@ -47,9 +47,8 @@
   // Galaxy Background (Fainter Particles for Depth)
   const bgParticleCount = 25000;
   const bgPositions = new Float32Array(bgParticleCount * 3);
-  const bgColors = new Float32Array(bgParticleCount * 3);
+  const bgColor = new THREE.Color(0xffffff);
   const bgSizes = new Float32Array(bgParticleCount);
-  const bgColor = new THREE.Color();
   const textureLoader = new THREE.TextureLoader();
   const starTexture = textureLoader.load('https://threejs.org/examples/textures/sprites/white-point.png');
 
@@ -58,24 +57,16 @@
   bgPositions[i3 + 0] = (Math.random() - 0.5) * 2500;
   bgPositions[i3 + 1] = (Math.random() - 0.5) * 2500;
   bgPositions[i3 + 2] = (Math.random() - 0.5) * 2500;
-
-  const intensity = Math.random() * 0.5 + 0.5; // Fainter
-  bgColor.setHSL(0, 0, 1); // White
-  bgColors[i3 + 0] = bgColor.r * intensity;
-  bgColors[i3 + 1] = bgColor.g * intensity;
-  bgColors[i3 + 2] = bgColor.b * intensity;
-
-  bgSizes[i] = Math.random() * 1.5 + 0.5; // Smaller sizes
+  bgSizes[i] = Math.random() * 1.5 + 0.5;
   }
 
   const bgGeometry = new THREE.BufferGeometry();
   bgGeometry.setAttribute('position', new THREE.BufferAttribute(bgPositions, 3));
-  bgGeometry.setAttribute('color', new THREE.BufferAttribute(bgColors, 3));
   bgGeometry.setAttribute('size', new THREE.BufferAttribute(bgSizes, 1));
 
   const bgMaterial = new THREE.PointsMaterial({
   sizeAttenuation: true,
-  vertexColors: true,
+  color: 0xffffff,
   size: 2,
   map: starTexture,
   transparent: true,
@@ -86,48 +77,55 @@
   const background = new THREE.Points(bgGeometry, bgMaterial);
   scene.add(background);
 
-  // Mock research project data with progress as age proxy
+  // Mock research project data
   const projects = [
-  { id: 'proj1', title: 'Quantum Entanglement Study', topic: 'Quantum Physics', progress: 0.1, size: 15, x: 0, y: 0, z: 100 }, // 'Younger'
-  { id: 'proj2', title: 'Exoplanet Atmosphere Analysis', topic: 'Astrophysics', progress: 0.5, size: 12, x: 150, y: 80, z: -100 }, // Intermediate
-  { id: 'proj3', title: 'Machine Learning for Drug Discovery', topic: 'AI & Biotech', progress: 0.9, size: 18, x: -100, y: -150, z: 150 }, // 'Older'
-  { id: 'proj4', title: 'Dark Matter Distribution Mapping', topic: 'Astrophysics', progress: 0.2, size: 10, x: -200, y: 120, z: -120 }, // Younger
-  { id: 'proj5', title: 'Novel Materials Synthesis', topic: 'Materials Science', progress: 0.7, size: 14, x: 120, y: -30, z: 50 }, // Older
-  { id: 'proj6', title: 'Cosmological Microwave Background Analysis', topic: 'Cosmology', progress: 0.4, size: 11, x: -250, y: 0, z: -150 }, // Intermediate
+  { id: 'proj1', title: 'Quantum Entanglement Study', topic: 'Quantum Physics', progress: 0.1, size: 15, x: 0, y: 0, z: 100 },
+  { id: 'proj2', title: 'Exoplanet Atmosphere Analysis', topic: 'Astrophysics', progress: 0.5, size: 12, x: 150, y: 80, z: -100 },
+  { id: 'proj3', title: 'Machine Learning for Drug Discovery', topic: 'AI & Biotech', progress: 0.9, size: 18, x: -100, y: -150, z: 150 },
+  { id: 'proj4', title: 'Dark Matter Distribution Mapping', topic: 'Astrophysics', progress: 0.2, size: 10, x: -200, y: 120, z: -120 },
+  { id: 'proj5', title: 'Novel Materials Synthesis', topic: 'Materials Science', progress: 0.7, size: 14, x: 120, y: -30, z: 50 },
+  { id: 'proj6', title: 'Cosmological Microwave Background Analysis', topic: 'Cosmology', progress: 0.4, size: 11, x: -250, y: 0, z: -150 },
   ];
 
-  function getStarColor(progress) {
-  // Approximate color gradient: Blue -> White -> Yellow -> Orange -> Red
-  const color = new THREE.Color();
-  const p = progress;
-
-  if (p < 0.25) {
-  color.setRGB(0.3 + p * 2.8, 0.6 + p * 1.6, 1.0); // Blue to White-Blue
-  } else if (p < 0.5) {
-  const q = (p - 0.25) * 4;
-  color.setRGB(1.0, 1.0 - 0.4 * q, 1.0 - 0.8 * q); // White-Blue to Yellow-White
-  } else if (p < 0.75) {
-  const q = (p - 0.5) * 4;
-  color.setRGB(1.0, 0.6 - 0.2 * q, 0.2 + 0.2 * q); // Yellow-White to Orange
-  } else {
-  const q = (p - 0.75) * 4;
-  color.setRGB(1.0 - 0.2 * q, 0.4 - 0.1 * q, 0.4 - 0.4 * q); // Orange to Red-Orange
+  function getStarColorByProgress(progress) {
+  const step = Math.floor(progress * 10);
+  switch (step) {
+  case 0: return new THREE.Color(0xb9f2ff); // Bluish-white (O-type)
+  case 1: return new THREE.Color(0xffffff); // White (A-type)
+  case 2: return new THREE.Color(0xfff5e1); // Yellow-white (F-type)
+  case 3: return new THREE.Color(0xfff0d4); // Pale yellow (G-type - like our Sun)
+  case 4: return new THREE.Color(0xffdab9); // Yellow-orange (K-type)
+  case 5: return new THREE.Color(0xff8c69); // Orange (M-type)
+  case 6: return new THREE.Color(0xff69b4); // Pinkish-red (Late M-type/Carbon star) - artistic choice
+  case 7: return new THREE.Color(0xff4500); // Red-orange (S-type)
+  case 8: return new THREE.Color(0xff0000); // Red (Very late M-type)
+  case 9: return new THREE.Color(0x8b00ff); // Violet (White Dwarf - artistic)
+  default: return new THREE.Color(0xffffff);
   }
-  return color;
   }
 
-  // Create project stars (spheres with astronomical colors)
+  const projectStars = [];
+  const starTextureLoad = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/glow02.png');
+
+  // Create project stars (Sprites)
   projects.forEach(project => {
-  const geometry = new THREE.SphereGeometry(project.size, 32, 32);
-  const color = getStarColor(project.progress);
-  const material = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending });
-  const star = new THREE.Mesh(geometry, material);
-  star.position.set(project.x, project.y, project.z);
-  star.userData = { projectId: project.id, projectData: project };
-  scene.add(star);
+  const color = getStarColorByProgress(project.progress);
+  const spriteMaterial = new THREE.SpriteMaterial({
+  map: starTextureLoad,
+  color: color,
+  blending: THREE.AdditiveBlending,
+  transparent: true,
+  sizeAttenuation: true,
+  });
+  const starSprite = new THREE.Sprite(spriteMaterial);
+  starSprite.scale.set(project.size, project.size, 1);
+  starSprite.position.set(project.x, project.y, project.z);
+  starSprite.userData = { projectId: project.id, projectData: project };
+  scene.add(starSprite);
+  projectStars.push(starSprite);
   });
 
-  // Raycasting
+  // Raycasting for sprites (needs a bit of a workaround as sprites aren't directly in intersects)
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
 
@@ -136,12 +134,12 @@
   mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
 
   raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObjects(scene.children);
+  const intersects = raycaster.intersectObjects(projectStars); // Raycast against the sprites
 
   if (intersects.length > 0) {
-  const intersectedObject = intersects[0].object;
-  if (intersectedObject.userData && intersectedObject.userData.projectId) {
-  showProjectDetails(intersectedObject.userData.projectData);
+  const intersectedSprite = intersects[0].object;
+  if (intersectedSprite.userData && intersectedSprite.userData.projectId) {
+  showProjectDetails(intersectedSprite.userData.projectData);
   }
   }
   }
@@ -150,7 +148,7 @@
   projectDetailsDiv.innerHTML = `
   <h3>${project.title}</h3>
   <p><strong>Topic:</strong> ${project.topic}</p>
-  <p><strong>"Age"/Progress:</strong> ${(project.progress * 100).toFixed(0)}%</p>
+  <p><strong>Progress:</strong> ${(project.progress * 100).toFixed(0)}%</p>
   <button onclick="hideProjectDetails()">Close</button>
   `;
   projectDetailsDiv.style.display = 'block';
