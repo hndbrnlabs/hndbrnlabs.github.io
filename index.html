@@ -1,92 +1,118 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galactic Research Navigator</title>
-    <style>
-        body { margin: 0; overflow: hidden; background-color: #000; color: #eee; font-family: sans-serif; }
-        #galaxy-container { position: relative; width: 100vw; height: 100vh; }
-        .star {
-            position: absolute;
-            border-radius: 50%;
-            cursor: pointer;
-            opacity: 0.8;
-        }
-        .star:hover {
-            opacity: 1;
-            box-shadow: 0 0 10px #fff;
-        }
-        #project-details {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: #eee;
-            padding: 20px;
-            border-radius: 5px;
-            z-index: 10;
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <div id="galaxy-container">
-        <div id="project-details"></div>
-    </div>
+ <html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galactic Research Navigator</title>
+  <style>
+  body { margin: 0; overflow: hidden; background-color: #000; color: #eee; font-family: sans-serif; }
+  #galaxy-container { position: relative; width: 100vw; height: 100vh; }
+  #project-details {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #eee;
+  padding: 20px;
+  border-radius: 5px;
+  z-index: 10;
+  display: none;
+  }
+  </style>
+ </head>
+ <body>
+  <div id="galaxy-container">
+  <div id="project-details"></div>
+  </div>
 
-    <script>
-        const galaxyContainer = document.getElementById('galaxy-container');
-        const projectDetailsDiv = document.getElementById('project-details');
+  <script type="module">
+  import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+  import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
 
-        // Mock research project data
-        const projects = [
-            { id: 'proj1', title: 'Quantum Entanglement Study', topic: 'Quantum Physics', progress: 0.8, color: 'lightblue', size: 15, x: 10, y: 20 },
-            { id: 'proj2', title: 'Exoplanet Atmosphere Analysis', topic: 'Astrophysics', progress: 0.5, color: 'orange', size: 12, x: 70, y: 30 },
-            { id: 'proj3', title: 'Machine Learning for Drug Discovery', topic: 'AI & Biotech', progress: 0.9, color: 'lightgreen', size: 18, x: 30, y: 60 },
-            { id: 'proj4', title: 'Dark Matter Distribution Mapping', topic: 'Astrophysics', progress: 0.3, color: 'yellow', size: 10, x: 85, y: 80 },
-            { id: 'proj5', title: 'Novel Materials Synthesis', topic: 'Materials Science', progress: 0.7, color: 'pink', size: 14, x: 50, y: 10 },
-            { id: 'proj6', title: 'Cosmological Microwave Background Analysis', topic: 'Cosmology', progress: 0.6, color: 'cyan', size: 11, x: 25, y: 90 },
-            // Add more projects here
-        ];
+  const galaxyContainer = document.getElementById('galaxy-container');
+  const projectDetailsDiv = document.getElementById('project-details');
 
-        function renderGalaxy() {
-            galaxyContainer.innerHTML = ''; // Clear previous stars
-            galaxyContainer.appendChild(projectDetailsDiv); // Ensure details div is present
+  // Scene, Camera, Renderer
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  galaxyContainer.appendChild(renderer.domElement);
 
-            projects.forEach(project => {
-                const star = document.createElement('div');
-                star.classList.add('star');
-                star.style.width = `${project.size}px`;
-                star.style.height = `${project.size}px`;
-                star.style.backgroundColor = project.color;
-                star.style.left = `${project.x}%`;
-                star.style.top = `${project.y}%`;
-                star.dataset.projectId = project.id;
+  // OrbitControls for camera interaction
+  const controls = new OrbitControls(camera, renderer.domElement);
+  camera.position.z = 500;
+  controls.update();
 
-                star.addEventListener('click', () => showProjectDetails(project));
-                galaxyContainer.appendChild(star);
-            });
-        }
+  // Mock research project data (3D positions)
+  const projects = [
+  { id: 'proj1', title: 'Quantum Entanglement Study', topic: 'Quantum Physics', progress: 0.8, color: 'lightblue', size: 5, x: 0, y: 0, z: 0 },
+  { id: 'proj2', title: 'Exoplanet Atmosphere Analysis', topic: 'Astrophysics', progress: 0.5, color: 'orange', size: 4, x: 100, y: 50, z: -50 },
+  { id: 'proj3', title: 'Machine Learning for Drug Discovery', topic: 'AI & Biotech', progress: 0.9, color: 'lightgreen', size: 6, x: -50, y: -100, z: 100 },
+  { id: 'proj4', title: 'Dark Matter Distribution Mapping', topic: 'Astrophysics', progress: 0.3, color: 'yellow', size: 3, x: -150, y: 80, z: -80 },
+  { id: 'proj5', title: 'Novel Materials Synthesis', topic: 'Materials Science', progress: 0.7, color: 'pink', size: 4.5, x: 75, y: -20, z: 30 },
+  { id: 'proj6', title: 'Cosmological Microwave Background Analysis', topic: 'Cosmology', progress: 0.6, color: 'cyan', size: 3.5, x: -200, y: 0, z: -100 },
+  // Add more projects here
+  ];
 
-        function showProjectDetails(project) {
-            projectDetailsDiv.innerHTML = `
-                <h3>${project.title}</h3>
-                <p><strong>Topic:</strong> ${project.topic}</p>
-                <p><strong>Progress:</strong> ${(project.progress * 100).toFixed(0)}%</p>
-                <button onclick="hideProjectDetails()">Close</button>
-            `;
-            projectDetailsDiv.style.display = 'block';
-        }
+  // Create stars (spheres)
+  projects.forEach(project => {
+  const geometry = new THREE.SphereGeometry(project.size, 16, 16);
+  const material = new THREE.MeshBasicMaterial({ color: project.color });
+  const star = new THREE.Mesh(geometry, material);
+  star.position.set(project.x, project.y, project.z);
+  star.userData = { projectId: project.id }; // Store project ID for interaction
+  star.addEventListener('click', () => showProjectDetails(project)); // No direct click event in Three.js
+  scene.add(star);
+  });
 
-        function hideProjectDetails() {
-            projectDetailsDiv.style.display = 'none';
-        }
+  // Raycasting for object selection (click simulation)
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
 
-        renderGalaxy();
+  function onMouseClick(event) {
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
 
-        // Basic "clustering" by initial placement - in a more advanced version,
-        // you'd have logic to group projects by topic visually.
-    </script>
-</body>
-</html>
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(scene.children);
+
+  if (intersects.length > 0) {
+  const intersectedObject = intersects[0].object;
+  if (intersectedObject.userData && intersectedObject.userData.projectId) {
+  const project = projects.find(p => p.id === intersectedObject.userData.projectId);
+  if (project) {
+  showProjectDetails(project);
+  }
+  }
+  }
+  }
+
+  function showProjectDetails(project) {
+  projectDetailsDiv.innerHTML = `
+  <h3>${project.title}</h3>
+  <p><strong>Topic:</strong> ${project.topic}</p>
+  <p><strong>Progress:</strong> ${(project.progress * 100).toFixed(0)}%</p>
+  <button onclick="hideProjectDetails()">Close</button>
+  `;
+  projectDetailsDiv.style.display = 'block';
+  }
+
+  function hideProjectDetails() {
+  projectDetailsDiv.style.display = 'none';
+  }
+
+  function animate() {
+  requestAnimationFrame(animate);
+  controls.update(); // Required for OrbitControls to work
+  renderer.render(scene, camera);
+  }
+
+  window.addEventListener('click', onMouseClick, false); // Use click event for raycasting
+  animate();
+
+  // Basic "clustering" by initial placement - in a more advanced version,
+  // you'd have logic to group projects by topic visually.
+  </script>
+ </body>
+ </html>
