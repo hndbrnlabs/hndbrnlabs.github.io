@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build": "parcel build main.js --out-dir dist --public-url ./"
+    "build": "parcel build main.js --dist-dir dist --public-url ./"
   },
   "devDependencies": {
     "parcel": "^2.x.x"
