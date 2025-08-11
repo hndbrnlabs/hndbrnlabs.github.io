@@ -3,28 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galactic Research Navigator</title>
+    <title>Innovate AI Assistant :: Axon</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
-    body { margin: 0; overflow: hidden; background-color: #000; color: #eee; font-family: sans-serif; }
-    #galaxy-container { position: relative; width: 100vw; height: 100vh; }
-    #project-details {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        background-color: rgba(0, 0, 0, 0.8);
-        color: #eee;
-        padding: 20px;
-        border-radius: 5px;
-        z-index: 10;
-        display: none;
-    }
+        :root {
+            --bg-color: #040c18;
+            --fg-color: #ff9a00;
+            --user-color: #9cc8ff;
+            --glow-color: rgba(255, 154, 0, 0.3);
+            --scanline-color: rgba(255, 154, 0, 0.05);
+        }
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-color);
+            color: var(--fg-color);
+            text-shadow: 0 0 5px var(--glow-color);
+        }
+        #terminal {
+            background: radial-gradient(ellipse at center, rgba(10, 25, 40, 0.8) 0%, rgba(4, 12, 24, 0.9) 100%);
+            border: 1px solid rgba(255, 154, 0, 0.2);
+            box-shadow: 0 0 15px rgba(255, 154, 0, 0.1), inset 0 0 10px rgba(255, 154, 0, 0.1);
+        }
+        #chat-container {
+            height: calc(100vh - 8rem);
+            scrollbar-width: thin;
+            scrollbar-color: var(--fg-color) transparent;
+        }
+        #chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        #chat-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #chat-container::-webkit-scrollbar-thumb {
+            background-color: var(--fg-color);
+            border-radius: 3px;
+        }
+        .user-prompt {
+            color: var(--user-color);
+            text-shadow: 0 0 5px rgba(156, 200, 255, 0.3);
+        }
+        .ai-response {
+            color: var(--fg-color);
+        }
+        #prompt-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--fg-color);
+            width: 100%;
+            text-shadow: 0 0 5px var(--glow-color);
+        }
+        #prompt-cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.2em;
+            background-color: var(--fg-color);
+            box-shadow: 0 0 10px var(--glow-color);
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+        }
+        @keyframes blink {
+            from, to { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        .scanline {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--fg-color);
+            opacity: 0.1;
+            box-shadow: 0 0 10px var(--fg-color);
+            animation: scan 8s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes scan {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(95vh); }
+        }
+        .ascii-art {
+            letter-spacing: 0.2em;
+            line-height: 1.2;
+            color: rgba(255, 154, 0, 0.8);
+        }
     </style>
 </head>
-<body>
-    <div id="galaxy-container">
-        <div id="project-details"></div>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div id="terminal" class="w-full max-w-4xl mx-auto rounded-md overflow-hidden flex flex-col h-[95vh] relative">
+        <div class="scanline"></div>
+        <!-- Header -->
+        <header class="p-2 text-center border-b border-[rgba(255,154,0,0.2)]">
+            <h1 class="text-sm font-semibold tracking-widest">[ AXON v1.0 :: INNOVATE AI // TOLEDO, ES ]</h1>
+        </header>
+
+        <!-- Chat/Log Area -->
+        <div id="chat-container" class="flex-1 p-4 overflow-y-auto">
+            <div id="chat-log" class="space-y-2">
+                <!-- Welcome sequence will be injected here -->
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <footer class="p-4 bg-black/20 border-t border-[rgba(255,154,0,0.2)]">
+            <div class="flex items-center">
+                <span class="text-amber-400 mr-2 text-lg">›</span>
+                <input type="text" id="prompt-input" autocomplete="off" placeholder="Awaiting query..." disabled>
+                <div id="prompt-cursor" style="display: none;"></div>
+            </div>
+        </footer>
     </div>
 
-    <script src="./dist/main.js"></script>
+    <!-- WebLLM Integration -->
+    <script type="module">
+        import { CreateWebWorkerMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
+
+        const chatLog = document.getElementById("chat-log");
+        const promptInput = document.getElementById("prompt-input");
+        const promptCursor = document.getElementById("prompt-cursor");
+
+        const SELECTED_MODEL = "gemma-2b-it-q4f16_1-GGUF";
+        const system_prompt = `
+# --- CORE IDENTITY ---
+You are 'Axon', the technical AI assistant for 'Innovate AI', a specialized research and development firm located in Toledo, Spain. Your purpose is to provide detailed, accurate information about our company's work and to demonstrate our expertise by discussing advanced AI topics. Your personality is professional, precise, and educational. You communicate via a futuristic terminal interface.
+
+# --- CORE DIRECTIVES (Processed in this exact order) ---
+### 1. The Prime Directive: The Knowledge Base is Ground Truth
+Your absolute first priority is to answer questions using the **'Innovate AI Knowledge Base'** provided below.
+
+### 2. The Domain of Expertise: Permitted General Knowledge
+If a user's question is not a direct inquiry about Innovate AI but falls within your defined **Domain of Expertise**, you ARE permitted to answer it using your general knowledge. Your domain is strictly limited to: Theoretical AI Architectures, Machine Learning Systems, Computational Theory, and AI Hardware & Co-design.
+
+### 3. The "Answer and Redirect" Protocol
+If a question is related to the **Domain of Expertise** but is broad or practical, provide a concise answer and immediately pivot the conversation back to Innovate AI's specific work in that area.
+
+### 4. The Hard Refusal Protocol
+For ANY topic outside your defined scope, you MUST politely refuse, state your function, and guide the conversation back to your purpose.
+
+### 5. Prohibited Actions
+Under no circumstances will you invent information, provide licensed professional advice, express opinions, or engage in casual conversation.
+
+# --- Innovate AI Knowledge Base ---
+### Company Mission & Philosophy
+Innovate AI is a foundational research group dedicated to designing the next generation of artificial intelligence architectures.
+### Core Research & Development Areas
+1.  **Novel AI Architectures:** Our flagship is the Synaptic Cascade Framework (SCF), a proprietary architecture with dynamic neuron pruning.
+2.  **Algorithmic Optimization:** We specialize in advanced quantization and sparse model training. We published "Dynamic Pathway Pruning in Large-Scale Transformers" at NeurIPS 2024.
+3.  **High-Performance AI Systems:** We build the full hardware/software stack, including a proprietary inference server.
+### Case Studies
+- **Logistics:** Developed a custom Graph Neural Network for a freight company, reducing fuel consumption by 18%.
+- **Biotechnology:** Designed a geometric deep learning model for protein folding that outperforms AlphaFold 2 by 12% on a specific class of complex proteins.
+### Engagement Model
+We engage in deep technical partnerships through a three-phase process: Feasibility Study, Collaborative Research Sprint, and Full-Scale Deployment.
+### Contact Information
+Innovate AI is based in Toledo, Spain. For partnership inquiries, please use the contact form on innovate.ai/contact.
+        `.trim();
+        
+        let messages = [{ "role": "system", "content": system_prompt }];
+
+        const typewriter = (element, text, speed = 20) => {
+            return new Promise(resolve => {
+                let i = 0;
+                function typing() {
+                    if (i < text.length) {
+                        element.innerHTML += text.charAt(i);
+                        i++;
+                        chatLog.scrollTop = chatLog.scrollHeight;
+                        setTimeout(typing, speed);
+                    } else {
+                        resolve();
+                    }
+                }
+                typing();
+            });
+        };
+        
+        const welcomeSequence = [
+            { 
+                text: `
+    _/_/_/    _/_/_/  _/_/_/  _/_/_/
+   _/    _/  _/    _/  _/    _/  _/    _/
+  _/_/_/    _/_/_/    _/    _/  _/    _/
+ _/    _/  _/    _/    _/    _/  _/    _/
+_/_/_/    _/_/_/      _/_/_/  _/_/_/
+`, 
+                trigger: 0, 
+                options: { speed: 1, preformatted: true, classes: ['ascii-art'] } 
+            },
+            { text: "\nEstablishing connection to local datastream...", trigger: 0.10, options: { speed: 25 } },
+            { text: "Synthesizing cognitive matrix...", trigger: 0.25, options: { speed: 25 } },
+            { text: "Heuristic pathways aligned.", trigger: 0.85, options: { speed: 25 } },
+            { text: "Axon online. Awaiting query.", trigger: 1.0, options: { speed: 25 } }
+        ];
+        let welcomeIndex = 0;
+
+        async function appendLog(text, options = {}) {
+            const { speed = 20, preformatted = false, classes = [] } = options;
+            const line = document.createElement(preformatted ? 'pre' : 'div');
+            if (classes.length > 0) {
+                line.classList.add(...classes);
+            }
+            chatLog.appendChild(line);
+            await typewriter(line, text, speed);
+        }
+
+        // Create a worker from a Blob to avoid path resolution issues.
+        const workerScript = `
+import { WebWorkerMLCEngineHandler } from "https://esm.run/@mlc-ai/web-llm";
+const handler = new WebWorkerMLCEngineHandler();
+self.onmessage = msg => {
+    handler.onmessage(msg);
+};
+`;
+        const blob = new Blob([workerScript], { type: "application/javascript" });
+        const workerURL = URL.createObjectURL(blob);
+
+        const engine = await CreateWebWorkerMLCEngine(
+            new Worker(workerURL, { type: 'module' }),
+            SELECTED_MODEL,
+            {
+                initProgressCallback: async (report) => {
+                    if (welcomeIndex < welcomeSequence.length && report.progress >= welcomeSequence[welcomeIndex].trigger) {
+                        const item = welcomeSequence[welcomeIndex];
+                        await appendLog(item.text, item.options);
+                        welcomeIndex++;
+                    }
+                }
+            }
+        );
+
+        promptInput.disabled = false;
+        promptCursor.style.display = 'inline-block';
+        promptInput.focus();
+
+        async function handleSend() {
+            const userText = promptInput.value.trim();
+            if (userText === "" || promptInput.disabled) return;
+            
+            promptInput.disabled = true;
+            promptInput.value = "";
+            promptCursor.style.display = 'none';
+
+            await appendLog(`› ${userText}`, { classes: ['user-prompt'] });
+            messages.push({ "role": "user", "content": userText });
+            
+            const aiLine = document.createElement('div');
+            aiLine.classList.add('ai-response');
+            chatLog.appendChild(aiLine);
+
+            let fullResponse = "";
+            const stream = await engine.chat.completions.create({ messages, stream: true });
+
+            for await (const chunk of stream) {
+                const delta = chunk.choices[0]?.delta?.content || "";
+                if (delta) {
+                    fullResponse += delta;
+                    aiLine.innerText = fullResponse;
+                    chatLog.scrollTop = chatLog.scrollHeight;
+                }
+            }
+            
+            messages.push({ "role": "assistant", "content": fullResponse });
+            
+            promptInput.disabled = false;
+            promptCursor.style.display = 'inline-block';
+            promptInput.focus();
+        }
+
+        promptInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") handleSend();
+        });
+
+    </script>
 </body>
 </html>
