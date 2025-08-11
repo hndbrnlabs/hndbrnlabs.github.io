@@ -13,6 +13,7 @@
             --bg-color: #040c18;
             --fg-color: #ff9a00;
             --user-color: #9cc8ff;
+            --error-color: #ff4d4d;
             --glow-color: rgba(255, 154, 0, 0.3);
             --scanline-color: rgba(255, 154, 0, 0.05);
         }
@@ -48,6 +49,10 @@
         }
         .ai-response {
             color: var(--fg-color);
+        }
+        .error-message {
+            color: var(--error-color);
+            text-shadow: 0 0 5px rgba(255, 77, 77, 0.5);
         }
         #prompt-input {
             background: transparent;
@@ -98,7 +103,7 @@
         <div class="scanline"></div>
         <!-- Header -->
         <header class="p-2 text-center border-b border-[rgba(255,154,0,0.2)]">
-            <h1 class="text-sm font-semibold tracking-widest">[ AXON v1.0 :: HNDBRN LABS ]</h1>
+            <h1 class="text-sm font-semibold tracking-widest">[ AXON v1.0 :: INNOVATE AI // TOLEDO, ES ]</h1>
         </header>
 
         <!-- Chat/Log Area -->
@@ -126,7 +131,7 @@
         const promptInput = document.getElementById("prompt-input");
         const promptCursor = document.getElementById("prompt-cursor");
 
-        const SELECTED_MODEL = "mlc-ai/gemma-3-1b-it-q4f16_1-MLC";
+        const SELECTED_MODEL = "Llama-3-8B-Instruct-q4f16_1";
         const system_prompt = `
 # --- CORE IDENTITY ---
 You are 'Axon', the technical AI assistant for 'Innovate AI', a specialized research and development firm located in Toledo, Spain. Your purpose is to provide detailed, accurate information about our company's work and to demonstrate our expertise by discussing advanced AI topics. Your personality is professional, precise, and educational. You communicate via a futuristic terminal interface.
@@ -211,72 +216,83 @@ _/_/_/    _/_/_/      _/_/_/  _/_/_/
             await typewriter(line, text, speed);
         }
 
-        // Create a worker from a Blob to avoid path resolution issues.
-        const workerScript = `
-import { WebWorkerMLCEngineHandler } from "https://esm.run/@mlc-ai/web-llm";
-const handler = new WebWorkerMLCEngineHandler();
-self.onmessage = msg => {
-    handler.onmessage(msg);
-};
-`;
-        const blob = new Blob([workerScript], { type: "application/javascript" });
-        const workerURL = URL.createObjectURL(blob);
+        async function main() {
+            try {
+                const workerScript = `
+        import { WebWorkerMLCEngineHandler } from "https://esm.run/@mlc-ai/web-llm";
+        const handler = new WebWorkerMLCEngineHandler();
+        self.onmessage = msg => {
+            handler.onmessage(msg);
+        };
+        `;
+                const blob = new Blob([workerScript], { type: "application/javascript" });
+                const workerURL = URL.createObjectURL(blob);
 
-        const engine = await CreateWebWorkerMLCEngine(
-            new Worker(workerURL, { type: 'module' }),
-            SELECTED_MODEL,
-            {
-                initProgressCallback: async (report) => {
-                    if (welcomeIndex < welcomeSequence.length && report.progress >= welcomeSequence[welcomeIndex].trigger) {
-                        const item = welcomeSequence[welcomeIndex];
-                        await appendLog(item.text, item.options);
-                        welcomeIndex++;
+                const engine = await CreateWebWorkerMLCEngine(
+                    new Worker(workerURL, { type: 'module' }),
+                    SELECTED_MODEL,
+                    {
+                        initProgressCallback: (report) => {
+                            if (welcomeIndex < welcomeSequence.length && report.progress >= welcomeSequence[welcomeIndex].trigger) {
+                                const item = welcomeSequence[welcomeIndex];
+                                appendLog(item.text, item.options);
+                                welcomeIndex++;
+                            }
+                        }
                     }
+                );
+
+                promptInput.disabled = false;
+                promptCursor.style.display = 'inline-block';
+                promptInput.focus();
+
+                async function handleSend() {
+                    const userText = promptInput.value.trim();
+                    if (userText === "" || promptInput.disabled) return;
+                    
+                    promptInput.disabled = true;
+                    promptInput.value = "";
+                    promptCursor.style.display = 'none';
+
+                    await appendLog(`› ${userText}`, { classes: ['user-prompt'] });
+                    messages.push({ "role": "user", "content": userText });
+                    
+                    const aiLine = document.createElement('div');
+                    aiLine.classList.add('ai-response');
+                    chatLog.appendChild(aiLine);
+
+                    let fullResponse = "";
+                    const stream = await engine.chat.completions.create({ messages, stream: true });
+
+                    for await (const chunk of stream) {
+                        const delta = chunk.choices[0]?.delta?.content || "";
+                        if (delta) {
+                            fullResponse += delta;
+                            aiLine.innerText = fullResponse;
+                            chatLog.scrollTop = chatLog.scrollHeight;
+                        }
+                    }
+                    
+                    messages.push({ "role": "assistant", "content": fullResponse });
+                    
+                    promptInput.disabled = false;
+                    promptCursor.style.display = 'inline-block';
+                    promptInput.focus();
                 }
+
+                promptInput.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") handleSend();
+                });
+
+            } catch (err) {
+                console.error("Initialization error:", err);
+                await appendLog("\n[SYSTEM CRITICAL ERROR]", { classes: ['error-message']});
+                await appendLog("Could not initialize cognitive matrix. Please refresh the datastream.", { classes: ['error-message']});
+                promptInput.placeholder = "SYSTEM OFFLINE";
             }
-        );
-
-        promptInput.disabled = false;
-        promptCursor.style.display = 'inline-block';
-        promptInput.focus();
-
-        async function handleSend() {
-            const userText = promptInput.value.trim();
-            if (userText === "" || promptInput.disabled) return;
-            
-            promptInput.disabled = true;
-            promptInput.value = "";
-            promptCursor.style.display = 'none';
-
-            await appendLog(`› ${userText}`, { classes: ['user-prompt'] });
-            messages.push({ "role": "user", "content": userText });
-            
-            const aiLine = document.createElement('div');
-            aiLine.classList.add('ai-response');
-            chatLog.appendChild(aiLine);
-
-            let fullResponse = "";
-            const stream = await engine.chat.completions.create({ messages, stream: true });
-
-            for await (const chunk of stream) {
-                const delta = chunk.choices[0]?.delta?.content || "";
-                if (delta) {
-                    fullResponse += delta;
-                    aiLine.innerText = fullResponse;
-                    chatLog.scrollTop = chatLog.scrollHeight;
-                }
-            }
-            
-            messages.push({ "role": "assistant", "content": fullResponse });
-            
-            promptInput.disabled = false;
-            promptCursor.style.display = 'inline-block';
-            promptInput.focus();
         }
 
-        promptInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") handleSend();
-        });
+        main();
 
     </script>
 </body>
